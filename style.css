@@ -1,364 +1,5 @@
-/* ARKA PLAN GÖRSELİ EKLEME
-   Bu kısım sitenin en arkasına görseli koyar ve üzerini karartır.
-*/
 body {
-    /* League of Legends Görseli */
-    background-image: url('bg.jpg');
-    background-size: cover;      /* Tüm ekranı kapla */
-    background-position: center; /* Ortala */
-    background-repeat: no-repeat; /* Tekrar etme */
-    background-attachment: fixed; /* Kaydırmada sabit kalsın */
-    
-    /* Yazılar okunsun diye koyu filtre */
-    background-color: #121212; /* Resim yüklenmezse bu renk olur */
-    color: #ecf0f1;
-    font-family: 'Roboto', sans-serif;
-    margin: 0;
-    padding: 20px;
-    min-height: 100vh; /* Tam ekran yüksekliği */
-    
-    /* Filtre Katmanı (Overlay) */
-    position: relative;
-}
-
-/* Arka planın üzerine siyah bir katman atarak yazıları okunur hale getiriyoruz */
-body::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.7); /* %70 Siyahlık */
-    z-index: -1; /* İçeriğin arkasında kalsın */
-}
-
-/* --- DİĞER STİLLER (AYNI KALDI) --- */
-
-.container {
-    max-width: 900px;
-    margin: 0 auto;
-    position: relative; /* Filtrenin üzerinde kalması için */
-}
-
-/* Başlık */
-.main-title {
-    text-align: center;
-    color: #e84118;
-    margin-bottom: 25px;
-    letter-spacing: 2px;
-    font-weight: 700;
-    text-shadow: 2px 2px 4px rgba(0,0,0,0.5); /* Başlığa gölge */
-}
-
-/* Arama Alanı */
-.search-area {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin-bottom: 30px;
-}
-
-.search-box {
-    padding: 12px 20px;
-    width: 60%;
-    max-width: 400px;
-    border-radius: 25px;
-    border: 2px solid #e84118; /* Kenarlık rengini değiştirdim */
-    background: rgba(42, 42, 42, 0.9); /* Hafif saydam */
-    color: white;
-    font-size: 1rem;
-    outline: none;
-    transition: 0.3s;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-}
-
-.search-box:focus {
-    box-shadow: 0 0 15px rgba(232, 65, 24, 0.5);
-    background: rgba(50, 50, 50, 0.95);
-}
-
-.search-btn {
-    padding: 12px 25px;
-    margin-left: 10px;
-    border-radius: 25px;
-    border: none;
-    background: linear-gradient(45deg, #e84118, #c23616); /* Gradyan */
-    color: white;
-    font-weight: bold;
-    cursor: pointer;
-    transition: 0.3s;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-}
-
-.search-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 15px rgba(232, 65, 24, 0.5);
-}
-
-.hint {
-    text-align: center;
-    color: #bbb; /* Rengi biraz açtım */
-    font-size: 0.8rem;
-    margin-top: -20px;
-    margin-bottom: 30px;
-}
-
-/* Kullanıcı Kartı (Saydamlık Eklendi) */
-.user-section {
-    background-color: rgba(45, 52, 54, 0.95); /* Hafif saydam arka plan */
-    border-radius: 12px;
-    margin-bottom: 25px;
-    overflow: hidden;
-    box-shadow: 0 8px 20px rgba(0,0,0,0.4);
-    border: 1px solid rgba(232, 65, 24, 0.3); /* Hafif turuncu kenarlık */
-    backdrop-filter: blur(5px); /* Buzlu cam efekti (modern tarayıcılarda) */
-}
-
-/* Profil Başlığı */
-.profile-header {
-    background: linear-gradient(90deg, rgba(44, 62, 80, 0.9), rgba(52, 73, 94, 0.9));
-    padding: 15px;
-    display: flex;
-    align-items: center;
-    border-bottom: 1px solid rgba(255,255,255,0.1);
-}
-
-.profile-icon {
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    border: 3px solid #e84118; /* Kenarlığı kalınlaştırdım */
-    margin-right: 15px;
-    box-shadow: 0 0 10px rgba(232, 65, 24, 0.4);
-}
-
-.summoner-name-style {
-    font-size: 1.3rem;
-    font-weight: bold;
-    color: #ecf0f1;
-    text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
-}
-
-.rank-text {
-    font-size: 0.9rem;
-    color: #bdc3c7;
-}
-
-/* Maç Kartları */
-.matches-container {
-    padding: 10px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-.match-card {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: transform 0.2s, background 0.3s;
-    position: relative;
-    overflow: hidden;
-}
-
-.match-card:hover {
-    transform: scale(1.01);
-}
-
-.win {
-    background: linear-gradient(90deg, rgba(46, 204, 113, 0.2), rgba(39, 174, 96, 0.1));
-    border-left: 5px solid #2ecc71;
-}
-
-.lose {
-    background: linear-gradient(90deg, rgba(231, 76, 60, 0.2), rgba(192, 57, 43, 0.1));
-    border-left: 5px solid #e74c3c;
-}
-
-/* Kart İçeriği */
-.card-content {
-    display: flex;
-    align-items: center;
-    width: 100%;
-    justify-content: space-between;
-}
-
-.champ-info {
-    display: flex;
-    align-items: center;
-    min-width: 120px;
-}
-
-.champ-img {
-    width: 45px;
-    height: 45px;
-    border-radius: 50%;
-    margin-right: 10px;
-    border: 2px solid #555;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-}
-
-.champ-name {
-    display: block;
-    font-weight: bold;
-    font-size: 0.9rem;
-}
-
-/* Not Rozeti */
-.grade-badge {
-    display: inline-block;
-    padding: 2px 6px;
-    border-radius: 4px;
-    font-size: 0.7rem;
-    font-weight: bold;
-    margin-top: 3px;
-    color: #2d3436;
-    box-shadow: 1px 1px 3px rgba(0,0,0,0.2);
-}
-.grade-S { background-color: #f1c40f; }
-.grade-A { background-color: #2ecc71; }
-.grade-B { background-color: #3498db; color: white; }
-.grade-C { background-color: #95a5a6; }
-.grade-D { background-color: #7f8c8d; color: white; }
-.grade-F { background-color: #e74c3c; color: white; }
-
-/* İtemler */
-.items-grid {
-    display: flex;
-    gap: 3px;
-}
-
-.item-slot {
-    width: 30px;
-    height: 30px;
-    background-color: rgba(0,0,0,0.3);
-    border-radius: 4px;
-    overflow: hidden;
-    border: 1px solid #333;
-}
-
-.item-img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-/* İstatistikler */
-.stats {
-    text-align: right;
-    min-width: 80px;
-}
-
-.result-text {
-    font-size: 0.8rem;
-    font-weight: bold;
-    opacity: 0.9;
-}
-
-.kda-text {
-    font-size: 1rem;
-    font-weight: bold;
-    letter-spacing: 0.5px;
-    text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
-}
-
-/* Detay Bölümü */
-.match-details {
-    display: none;
-    background-color: rgba(34, 34, 34, 0.9);
-    margin-top: 10px;
-    padding: 10px;
-    border-radius: 8px;
-    justify-content: space-around;
-    align-items: center;
-    animation: fadeIn 0.3s ease;
-    border-top: 1px solid rgba(255,255,255,0.1);
-}
-
-.match-card.active {
-    flex-direction: column;
-    align-items: stretch;
-}
-
-.match-card.active .match-details {
-    display: flex;
-}
-
-.detail-box {
-    text-align: center;
-    display: flex;
-    flex-direction: column;
-}
-
-.detail-box span:first-child {
-    font-size: 0.7rem;
-    color: #aaa;
-    margin-bottom: 3px;
-}
-
-.text-white { color: #fff; font-weight: bold; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); }
-.text-gray { color: #ccc; }
-
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(-5px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-.loading {
-    text-align: center;
-    padding: 40px;
-    color: #ecf0f1;
-    font-size: 1.1rem;
-    background: rgba(0,0,0,0.5);
-    border-radius: 12px;
-}
-/* ... (Mevcut CSS'in tamamını koru, sadece burayı ekle veya güncelle) ... */
-
-/* İsim Satırı */
-.name-row {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-}
-
-/* Win Rate Çarkı */
-.wr-pie {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    position: relative;
-    box-shadow: 0 0 5px rgba(0,0,0,0.5);
-}
-
-/* Çarkın ortasındaki boşluk (Simit görünümü için) */
-.wr-pie::before {
-    content: "";
-    position: absolute;
-    width: 26px;
-    height: 26px;
-    background-color: #2c3e50; /* Profil başlık rengiyle uyumlu */
-    border-radius: 50%;
-}
-
-/* Çarkın içindeki yazı */
-.wr-text {
-    position: relative;
-    z-index: 1;
-    font-size: 0.7rem;
-    font-weight: bold;
-    color: white;
-}
-
-/* ... (Diğer tüm kodlar aynı kalacak: body, .match-card vs.) ... */
-body {
-    background-image: url('bg.jpg'); /* GitHub'da resim varsa */
+    background-image: url('bg.jpg'); 
     background-size: cover; background-position: center; background-attachment: fixed;
     background-color: #121212; color: #ecf0f1; font-family: 'Roboto', sans-serif; margin: 0; padding: 20px;
 }
@@ -368,20 +9,51 @@ body::before { content: ""; position: absolute; top: 0; left: 0; right: 0; botto
 .search-area { display: flex; justify-content: center; margin-bottom: 30px; }
 .search-box { padding: 12px 20px; width: 60%; border-radius: 25px; border: 2px solid #e84118; background: #2a2a2a; color: white; outline: none; }
 .search-btn { padding: 12px 25px; margin-left: 10px; border-radius: 25px; border: none; background: #e84118; color: white; font-weight: bold; cursor: pointer; }
+
+/* Kullanıcı Kartı */
 .user-section { background: rgba(45, 52, 54, 0.95); border-radius: 12px; margin-bottom: 25px; border: 1px solid #e8411844; }
 .profile-header { padding: 15px; display: flex; align-items: center; border-bottom: 1px solid #444; }
 .profile-icon { width: 60px; height: 60px; border-radius: 50%; border: 2px solid #e84118; margin-right: 15px; }
+
+/* İsim ve Win Rate Çarkı (BÜYÜTÜLDÜ) */
+.name-row { display: flex; align-items: center; gap: 15px; }
 .summoner-name-style { font-size: 1.2rem; font-weight: bold; }
+.wr-pie {
+    width: 45px; height: 45px; /* BÜYÜTÜLDÜ */
+    border-radius: 50%; display: flex;
+    justify-content: center; align-items: center; position: relative;
+    box-shadow: 0 0 5px rgba(0,0,0,0.5);
+    border: 2px solid #333;
+}
+.wr-pie::before {
+    content: ""; position: absolute; width: 32px; height: 32px; /* BÜYÜTÜLDÜ */
+    background-color: #2c3e50; border-radius: 50%; 
+}
+.wr-text { position: relative; z-index: 1; font-size: 0.85rem; font-weight: bold; color: white; }
+
 .rank-text { font-size: 0.9rem; color: #aaa; }
+
+/* Maç Kartları */
 .match-card { padding: 10px; border-radius: 8px; margin: 5px; cursor: pointer; border-left: 5px solid; transition: 0.2s; }
 .win { background: #2ecc7111; border-color: #2ecc71; }
 .lose { background: #e74c3c11; border-color: #e74c3c; }
 .card-content { display: flex; align-items: center; justify-content: space-between; }
 .champ-img { width: 40px; height: 40px; border-radius: 50%; margin-right: 10px; }
-.grade-badge { font-size: 0.7rem; padding: 2px 5px; border-radius: 3px; background: #333; }
-.items-grid { display: flex; gap: 2px; }
+
+/* PUANLAMA RENKLERİ (DÜZELTİLDİ) */
+.grade-badge { font-size: 0.7rem; padding: 2px 5px; border-radius: 3px; background: #333; font-weight:bold; color:white; min-width: 15px; text-align:center;}
+.grade-S { background-color: #f1c40f; color: #000; }
+.grade-A { background-color: #2ecc71; }
+.grade-B { background-color: #3498db; }
+.grade-C { background-color: #95a5a6; }
+.grade-D { background-color: #7f8c8d; }
+.grade-F { background-color: #e74c3c; }
+
+/* İTEMLER (BOŞLUKLAR SİLİNDİ) */
+.items-grid { display: flex; gap: 1px; } /* Gap küçültüldü */
 .item-slot { width: 28px; height: 28px; background: #111; border-radius: 4px; overflow: hidden; }
 .item-img { width: 100%; height: 100%; object-fit: cover; }
+
 .match-details { display: none; margin-top: 10px; background: #111; padding: 10px; border-radius: 5px; justify-content: space-around; }
 .match-card.active .match-details { display: flex; }
 .detail-box { text-align: center; display: flex; flex-direction: column; }
