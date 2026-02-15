@@ -61,6 +61,9 @@ HESAPLAR = {
     "murat": [
         "https://www.leagueofgraphs.com/summoner/tr/call%20me%20sch-911"
     ],
+    "taha": [
+        "https://www.leagueofgraphs.com/summoner/tr/Killdozer-3807"
+    ],
     "hepsi": [] # Otomatik dolacak
 }
 
