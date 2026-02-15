@@ -21,29 +21,43 @@ HESAPLAR = {
     ],
     "dogi": [
         "https://www.leagueofgraphs.com/summoner/tr/xXZeUs01-TR1"
+    ],
     "fedo": [
         "https://www.leagueofgraphs.com/summoner/tr/betrayal1907-KURT"
+    ],
     "kayhan": [
         "https://www.leagueofgraphs.com/summoner/tr/AMIN+O%C4%9ELU+SC-3831"
+    ],
     "yerli": [
         "https://www.leagueofgraphs.com/summoner/tr/Tangal%C4%B1+ILLAO%C4%B0-TR1"
+    ],
     "memet": [
         "https://www.leagueofgraphs.com/summoner/tr/Kaybeden-3131"
+    ],
     "oktay": [
         "https://www.leagueofgraphs.com/summoner/tr/kaybetmeyen-svm"
+    ],
     "alper": [
         "https://www.leagueofgraphs.com/summoner/tr/22010600025-3131"
+    ],
     "avni": [
         "https://www.leagueofgraphs.com/summoner/tr/JAYLES-SAMA"
+    ],
     "ibo": [
         "https://www.leagueofgraphs.com/summoner/tr/Retruyol-one"
         "https://www.leagueofgraphs.com/summoner/euw/retruyol-EUW"
+    ],
     "furkan": [
         "https://www.leagueofgraphs.com/summoner/tr/Legorn-RNG"
+    ],
     "kofi": [
         "https://www.leagueofgraphs.com/summoner/tr/KOFI-KOOFI"
+    ],
     "musto": [
         "https://www.leagueofgraphs.com/summoner/tr/QUZEY+TEK%C4%B0NO%C4%9ELU-CAZ"
+    ],
+    "kaan": [
+        "https://www.leagueofgraphs.com/summoner/tr/Eloha-111"
     ],
     # "hepsi" grubu otomatik oluşacak, dokunma
     "hepsi": []
