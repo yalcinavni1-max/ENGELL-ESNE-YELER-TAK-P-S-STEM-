@@ -108,15 +108,32 @@ def scrape_summoner(url):
                     min_match = re.search(r"(\d+)", dur_text)
                     if min_match: game_duration = int(min_match.group(1))
 
-                # --- 2. OYUN TÜRÜ ---
+                # --- 2. OYUN TÜRÜ (DÜZELTİLMİŞ) ---
                 queue_mode = "Normal"
+                
+                # A) Direkt QueueType Div'i
                 q_div = row.find("div", class_="queueType")
                 if q_div:
                     raw_q = q_div.text.strip()
                     if "Ranked Solo" in raw_q: queue_mode = "Solo/Duo"
                     elif "Ranked Flex" in raw_q: queue_mode = "Flex"
                     elif "ARAM" in raw_q: queue_mode = "ARAM"
-                    else: queue_mode = raw_q.split()[0] if raw_q else "Normal"
+                    elif "Arena" in raw_q: queue_mode = "Arena"
+                    else: queue_mode = raw_q.split()[0]
+                else:
+                    # B) GameMode Div'i
+                    g_div = row.find("div", class_="gameMode")
+                    if g_div:
+                        raw_g = g_div.text.strip()
+                        if "Solo" in raw_g: queue_mode = "Solo/Duo"
+                        elif "Flex" in raw_g: queue_mode = "Flex"
+                        else: queue_mode = raw_g
+                    else:
+                        # C) Metin Taraması (Son Çare)
+                        row_text = row.text.strip()
+                        if "Ranked Solo" in row_text: queue_mode = "Solo/Duo"
+                        elif "Ranked Flex" in row_text: queue_mode = "Flex"
+                        elif "ARAM" in row_text: queue_mode = "ARAM"
 
                 # --- 3. ŞAMPİYON BULMA ---
                 champ_key = "Poro"
@@ -138,7 +155,6 @@ def scrape_summoner(url):
                             champ_key = name_map.get(raw, raw.capitalize())
                             break
                 
-                # Yedek (Alt Tag)
                 if champ_key == "Poro":
                     for img in row.find_all("img"):
                         alt = img.get("alt", "")
@@ -151,11 +167,12 @@ def scrape_summoner(url):
                             elif "VelKoz" in raw_alt: champ_key = "Velkoz"
                             elif "ChoGath" in raw_alt: champ_key = "Chogath"
                             elif "KhaZix" in raw_alt: champ_key = "Khazix"
+                            elif "Wukong" in raw_alt: champ_key = "MonkeyKing"
                             else: champ_key = raw_alt
                             break
                 final_champ_img = f"{RIOT_CDN}/champion/{champ_key}.png"
 
-                # --- 4. İTEMLER (Regex ile ID Arama - En Sağlam Yöntem) ---
+                # --- 4. İTEMLER (Resimsizleri Eledik) ---
                 items = []
                 img_tags = row.find_all("img")
                 for img in img_tags:
@@ -166,7 +183,9 @@ def scrape_summoner(url):
                         val = int(num)
                         if 1000 <= val <= 8000 and not (5000 <= val < 6000) and not (2020 <= val <= 2030):
                             items.append(f"{RIOT_CDN}/item/{val}.png")
-                clean_items = list(dict.fromkeys(items))[:7]
+                
+                # Boş veya hatalı linkleri önlemek için temizle
+                clean_items = list(dict.fromkeys(items))[:9]
 
                 # --- 5. VERİLER ---
                 kda_text = kda_div.text.strip()
