@@ -1,76 +1,175 @@
 const profilesArea = document.getElementById('profiles-area');
 const searchInput = document.getElementById('searchInput');
 
-searchInput.addEventListener("keypress", (e) => { if (e.key === "Enter") performSearch(); });
+// Enter tuşu desteği
+searchInput.addEventListener("keypress", function(event) {
+    if (event.key === "Enter") performSearch();
+});
 
 async function performSearch() {
     const query = searchInput.value.trim();
-    if (!query) return alert("Grup adı girin!");
-    profilesArea.innerHTML = `<div class="loading">🔍 '${query}' taranıyor...</div>`;
+    
+    if (!query) {
+        alert("Lütfen bir grup adı girin!");
+        return;
+    }
+
+    // Yükleniyor animasyonu
+    profilesArea.innerHTML = `<div class="loading">
+        🔍 <b>'${query}'</b> grubu taranıyor...<br>
+        <small style="font-size:0.8rem; color:#aaa;">Veriler güncel olarak çekiliyor, lütfen bekleyin.</small>
+    </div>`;
 
     try {
+        // Yeni API'ye istek at
         const response = await fetch(`/api/search?q=${query}`);
+        if (!response.ok) throw new Error("Sunucu ile bağlantı kurulamadı.");
+        
         const data = await response.json();
-        profilesArea.innerHTML = '';
-        if (data.error) return profilesArea.innerHTML = `<div class="loading">${data.error}</div>`;
+        profilesArea.innerHTML = ''; // Temizle
 
-        data.forEach(user => {
-            if (user.error) return;
-            const section = document.createElement('div');
-            section.className = 'user-section';
-            
-            // Win Rate Renkleri
-            const wr = user.win_rate;
-            const wrCol = wr >= 50 ? '#2ecc71' : (wr <= 25 ? '#e74c3c' : '#f39c12');
+        // Hata kontrolü (Grup bulunamadı vb.)
+        if (data.error) {
+            profilesArea.innerHTML = `<div style="text-align:center; color:#ff6b6b; font-size:1.1rem; margin-top:20px;">
+                ⚠️ ${data.error}
+            </div>`;
+            return;
+        }
+        
+        const list = Array.isArray(data) ? data : [data];
+        
+        if (list.length === 0) {
+            profilesArea.innerHTML = '<div style="color:white;text-align:center;">Bu grupta kayıtlı hesap yok veya veri çekilemedi.</div>';
+            return;
+        }
 
-            section.innerHTML = `
-                <div class="profile-header">
-                    <img src="${user.icon}" class="profile-icon">
-                    <div class="profile-text">
-                        <div class="name-row">
-                            <span class="summoner-name-style">${user.summoner}</span>
-                            <div class="wr-pie" style="background: conic-gradient(${wrCol} 0% ${wr}%, #444 ${wr}% 100%);">
-                                <span class="wr-text">%${wr}</span>
-                            </div>
-                        </div>
-                        <div class="rank-text">${user.rank}</div>
+        list.forEach(user => {
+            if (user.error) {
+                // Tekil kullanıcı hatası (Link bozuk vb.)
+                const errDiv = document.createElement('div');
+                errDiv.style.color = "#ff6b6b";
+                errDiv.style.textAlign = "center";
+                errDiv.style.padding = "10px";
+                errDiv.innerHTML = `<p>⚠️ Hesap Hatası: ${user.error}</p>`;
+                profilesArea.appendChild(errDiv);
+            } else {
+                createProfileCard(user);
+            }
+        });
+
+    } catch (error) {
+        console.error("JS Hatası:", error);
+        profilesArea.innerHTML = `<div style="text-align:center; color:#ff6b6b;">Sistem Hatası: ${error.message}</div>`;
+    }
+}
+
+function createProfileCard(user) {
+    const section = document.createElement('div');
+    section.className = 'user-section';
+    
+    const icon = user.icon || "https://ddragon.leagueoflegends.com/cdn/14.3.1/img/profileicon/29.png";
+    const name = user.summoner || "Bilinmeyen";
+    const rank = user.rank || "Unranked";
+    
+    // --- YENİ EKLENEN KISIM: Win Rate Rengi ---
+    const wr = user.win_rate || 0;
+    let wrColor = '#f39c12'; // Varsayılan Turuncu
+    if (wr >= 50) wrColor = '#2ecc71'; // Yeşil
+    if (wr <= 25) wrColor = '#e74c3c'; // Kırmızı
+
+    section.innerHTML = `
+        <div class="profile-header">
+            <img src="${icon}" class="profile-icon">
+            <div class="profile-text">
+                <div class="name-row">
+                    <span class="summoner-name-style">${name}</span>
+                    <div class="wr-pie" style="background: conic-gradient(${wrColor} 0% ${wr}%, #444 ${wr}% 100%); border-color: ${wrColor};">
+                        <span class="wr-text">%${wr}</span>
                     </div>
                 </div>
-                <div class="matches-container"></div>`;
-            
-            const container = section.querySelector('.matches-container');
-            user.matches.forEach(match => {
-                const card = document.createElement('div');
-                card.className = `match-card ${match.result}`;
-                card.onclick = () => card.classList.toggle('active');
-                
-                // İtemler (Boşluksuz)
-                let itemsHtml = match.items.map(url => `<div class="item-slot"><img src="${url}" class="item-img"></div>`).join('');
-                const csColor = match.cs.includes("VS") ? "#3498db" : "#aaa";
+                <div class="rank-text">${rank}</div>
+            </div>
+        </div>
+        <div class="matches-container"></div>
+    `;
+    
+    const container = section.querySelector('.matches-container');
 
-                // Puan Rengi (Grade Class) Kontrolü
-                // Grade bazen S, A, B+ gelebilir. Sadece ilk harfi alıp class yapıyoruz (grade-S, grade-A)
-                const gradeClass = `grade-${match.grade.charAt(0)}`; 
+    if (user.matches && user.matches.length > 0) {
+        user.matches.forEach(match => {
+            const card = document.createElement('div');
+            const resClass = match.result ? match.result : 'lose';
+            card.classList.add('match-card', resClass);
+            card.onclick = () => card.classList.toggle('active');
 
-                card.innerHTML = `
-                    <div class="card-content">
-                        <div class="champ-info"><img src="${match.img}" class="champ-img">
-                            <div>
-                                <span class="champ-name">${match.champion}</span>
-                                <div class="grade-badge ${gradeClass}">${match.grade}</div>
-                            </div>
+            // İtemler (Resimsiz olanları gizleme mantığı korunuyor)
+            let itemsHtml = '';
+            const items = match.items || [];
+            if (items.length > 0) {
+                items.forEach(url => {
+                    itemsHtml += `<div class="item-slot"><img src="${url}" class="item-img" onerror="this.parentElement.style.display='none'"></div>`;
+                });
+            } else {
+                itemsHtml = '<span style="font-size:0.7rem; color:#666;">İtem Yok</span>';
+            }
+
+            const champImg = match.img || "";
+            const lpText = match.lp_change || "";
+            let lpStyle = "color:#aaa;";
+            if(lpText.includes('+')) lpStyle = "color:#4cd137;";
+            if(lpText.includes('-')) lpStyle = "color:#e84118;";
+
+            // CS veya GÖRÜŞ SKORU Rengi
+            const csText = match.cs || "";
+            // Eğer içinde "VS" veya "GÖRÜŞ" geçiyorsa Mavi, yoksa Gri
+            const isVision = csText.includes("VS") || csText.includes("GÖRÜŞ");
+            const csColor = isVision ? "#3498db" : "#aaa"; 
+            const csLabel = isVision ? "Görüş Skoru" : "Minyon";
+
+            // --- YENİ EKLENEN KISIM: Grade Class Düzeltmesi ---
+            // "S", "A+", "C-" gibi değerlerden sadece baş harfi alıyoruz (S, A, C)
+            const gradeChar = match.grade ? match.grade.charAt(0).toUpperCase() : 'C';
+            const gradeClass = `grade-${gradeChar}`;
+
+            card.innerHTML = `
+                <div class="card-content">
+                    <div class="champ-info">
+                        <img src="${champImg}" class="champ-img">
+                        <div>
+                            <span class="champ-name">${match.champion}</span>
+                            <div class="grade-badge ${gradeClass}">${match.grade}</div>
                         </div>
-                        <div class="items-grid">${itemsHtml}</div>
-                        <div class="stats"><div class="result-text">${match.result.toUpperCase()}</div><div class="kda-text">${match.kda}</div></div>
                     </div>
-                    <div class="match-details">
-                        <div class="detail-box"><span>KDA</span><b class="text-white">${match.kda_score}</b></div>
-                        <div class="detail-box"><span>Durum</span><b style="color:${csColor}">${match.cs}</b></div>
-                        <div class="detail-box"><span>Mod</span><b class="text-white">${match.queue_mode}</b></div>
-                    </div>`;
-                container.appendChild(card);
-            });
-            profilesArea.appendChild(section);
+                    
+                    <div class="items-grid">${itemsHtml}</div>
+
+                    <div class="stats">
+                        <div class="result-text">${resClass.toUpperCase()}</div>
+                        <div class="kda-text">${match.kda}</div>
+                        <div style="font-size:0.7rem; color:#666;">▼ Detay</div>
+                    </div>
+                </div>
+
+                <div class="match-details">
+                    <div class="detail-box">
+                        <span>KDA Skor</span>
+                        <b class="text-white">${match.kda_score}</b>
+                    </div>
+                    <div class="detail-box">
+                        <span>${csLabel}</span>
+                        <b style="color:${csColor};">${csText}</b>
+                    </div>
+                    
+                    <div class="detail-box" style="flex-direction:column;">
+                        <span style="font-size:0.75rem; color:#ddd; font-weight:bold;">${match.queue_mode}</span>
+                        <span style="font-size:0.7rem; font-weight:bold; ${lpStyle} margin-top:2px;">${lpText}</span>
+                    </div>
+                </div>
+            `;
+            container.appendChild(card);
         });
-    } catch (e) { profilesArea.innerHTML = "Sistem Hatası!"; }
+    } else {
+        container.innerHTML = '<div style="padding:20px; text-align:center; color:#666;">Maç bulunamadı.</div>';
+    }
+    profilesArea.appendChild(section);
 }
