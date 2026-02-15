@@ -18,7 +18,8 @@ HESAPLAR = {
     "yiğit": ["https://www.leagueofgraphs.com/summoner/tr/EGO-19050"],
     "dogi": ["https://www.leagueofgraphs.com/summoner/tr/xXZeUs01-TR1"],
     "fedo": ["https://www.leagueofgraphs.com/summoner/tr/betrayal1907-KURT"],
-    "kayhan": ["https://www.leagueofgraphs.com/summoner/tr/AMIN+O%C4%9ELU+SC-3831"
+    "kayhan": [
+            "https://www.leagueofgraphs.com/summoner/tr/AMIN+O%C4%9ELU+SC-3831"
               "https://www.leagueofgraphs.com/summoner/tr/EYouLoST-TR1"
     ],
     "yerli": ["https://www.leagueofgraphs.com/summoner/tr/Tangal%C4%B1+ILLAO%C4%B0-TR1"],
