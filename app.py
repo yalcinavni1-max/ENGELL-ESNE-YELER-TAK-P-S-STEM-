@@ -9,8 +9,7 @@ import random
 app = Flask(__name__, static_folder='.', static_url_path='')
 CORS(app)
 
-# --- 1. HESAP GRUPLARI (YENİ SİSTEM) ---
-# Buraya istediğin kadar grup ekleyebilirsin.
+# --- 1. HESAP GRUPLARI ---
 HESAPLAR = {
     "abt": [
         "https://www.leagueofgraphs.com/summoner/tr/Ragnar+Lothbrok-0138",
@@ -44,7 +43,7 @@ HESAPLAR = {
         "https://www.leagueofgraphs.com/summoner/tr/JAYLES-SAMA"
     ],
     "ibo": [
-        "https://www.leagueofgraphs.com/summoner/tr/Retruyol-one"
+        "https://www.leagueofgraphs.com/summoner/tr/Retruyol-one",
         "https://www.leagueofgraphs.com/summoner/euw/retruyol-EUW"
     ],
     "furkan": [
@@ -62,16 +61,16 @@ HESAPLAR = {
     "murat": [
         "https://www.leagueofgraphs.com/summoner/tr/call%20me%20sch-911"
     ],
-    # "hepsi" grubu otomatik oluşacak, dokunma
-    "hepsi": []
+    "hepsi": [] # Otomatik dolacak
 }
 
-# Tüm linkleri "hepsi" grubunda topla
+# "hepsi" grubunu doldur
 all_links = []
 for k, v in HESAPLAR.items():
     if k != "hepsi": all_links.extend(v)
 HESAPLAR["hepsi"] = list(set(all_links))
 
+URL_LISTESI = HESAPLAR["abt"] 
 
 @app.route('/')
 def serve_index():
@@ -84,7 +83,6 @@ def get_latest_version():
     except: pass
     return "14.3.1"
 
-# --- NOT HESAPLAMA ---
 def calculate_grade(score):
     if score >= 4.0: return "S"
     elif score >= 3.0: return "A"
@@ -93,11 +91,10 @@ def calculate_grade(score):
     elif score >= 1.0: return "D"
     else: return "F"
 
-# --- SCRAPER (KORUNAN ORİJİNAL KOD) ---
+# --- SCRAPER ---
 def scrape_summoner(url):
-    # Eğer link boşsa veya geçersizse atla
-    if not url or "leagueofgraphs" not in url: 
-        return {"error": "Link Tanımsız", "summoner": "Bilinmiyor", "matches": []}
+    if not url or "leagueofgraphs" not in url:
+        return {"error": "Link Girilmedi", "summoner": "Bilinmiyor", "matches": []}
 
     time.sleep(random.uniform(0.3, 0.8))
     version = get_latest_version()
@@ -112,7 +109,6 @@ def scrape_summoner(url):
         response = requests.get(url, headers=headers, timeout=15)
         soup = BeautifulSoup(response.content, 'html.parser')
 
-        # İsim ve Rank
         summoner_name = "Sihirdar"
         try: summoner_name = soup.find("title").text.split("(")[0].strip().replace(" - League of Legends", "")
         except: pass
@@ -160,7 +156,7 @@ def scrape_summoner(url):
                         elif "Ranked Flex" in row_text: queue_mode = "Flex"
                         elif "ARAM" in row_text: queue_mode = "ARAM"
 
-                # --- 2. ŞAMPİYON ---
+                # --- 2. ŞAMPİYON BULMA (ÖZEL KARAKTER DÜZELTMESİ) ---
                 champ_key = "Poro"
                 links = row.find_all("a")
                 for link in links:
@@ -169,15 +165,47 @@ def scrape_summoner(url):
                         parts = href.split("/")
                         if len(parts) > 3:
                             raw = parts[3].replace("-", "").replace(" ", "").lower()
-                            name_map = {"wukong": "MonkeyKing", "renata": "Renata", "missfortune": "MissFortune", "masteryi": "MasterYi", "drmundo": "DrMundo", "jarvaniv": "JarvanIV", "tahmkench": "TahmKench", "xinzhao": "XinZhao", "kogmaw": "KogMaw", "reksai": "RekSai", "aurelionsol": "AurelionSol", "twistedfate": "TwistedFate", "leesin": "LeeSin", "kaisa": "Kaisa"}
+                            
+                            # İSİM HARİTASI (KOD İLE DATA DRAGON EŞLEŞTİRMESİ)
+                            name_map = {
+                                "wukong": "MonkeyKing",
+                                "renata": "Renata",
+                                "missfortune": "MissFortune",
+                                "masteryi": "MasterYi",
+                                "drmundo": "DrMundo",
+                                "jarvaniv": "JarvanIV",
+                                "tahmkench": "TahmKench",
+                                "xinzhao": "XinZhao",
+                                "kogmaw": "KogMaw",
+                                "reksai": "RekSai",       # Rek'Sai Eklendi
+                                "kaisa": "Kaisa",         # Kai'Sa Eklendi
+                                "velkoz": "Velkoz",       # Vel'Koz Eklendi
+                                "chogath": "Chogath",     # Cho'Gath Eklendi
+                                "khazix": "Khazix",       # Kha'Zix Eklendi
+                                "belveth": "Belveth",
+                                "aurelionsol": "AurelionSol",
+                                "twistedfate": "TwistedFate",
+                                "leesin": "LeeSin",
+                                "leblanc": "Leblanc"
+                            }
                             champ_key = name_map.get(raw, raw.capitalize())
                             break
+                
+                # Yedek (Resim Alt Etiketinden Bulma)
                 if champ_key == "Poro":
                     for img in row.find_all("img"):
                         alt = img.get("alt", "")
                         if alt and len(alt) > 2 and alt not in ["Victory", "Defeat", "Role", "Item", "Gold"]:
-                            champ_key = alt.replace(" ", "").replace("'", "").replace(".", "")
+                            raw_alt = alt.replace(" ", "").replace("'", "").replace(".", "")
+                            # Buradaki isimleri de kontrol et
+                            if raw_alt == "RekSai": champ_key = "RekSai"
+                            elif raw_alt == "KaiSa": champ_key = "Kaisa"
+                            elif raw_alt == "VelKoz": champ_key = "Velkoz"
+                            elif raw_alt == "ChoGath": champ_key = "Chogath"
+                            elif raw_alt == "KhaZix": champ_key = "Khazix"
+                            else: champ_key = raw_alt
                             break
+                
                 final_champ_img = f"{RIOT_CDN}/champion/{champ_key}.png"
 
                 # --- 3. İTEMLER ---
@@ -195,7 +223,7 @@ def scrape_summoner(url):
                             items.append(f"{RIOT_CDN}/item/{val}.png")
                 clean_items = list(dict.fromkeys(items))[:9]
 
-                # --- 4. TEMEL VERİLER ---
+                # --- 4. VERİLER ---
                 kda_text = kda_div.text.strip()
                 result = "win" if "Victory" in row.text or "Zafer" in row.text else "lose"
 
@@ -210,7 +238,7 @@ def scrape_summoner(url):
                     else: score_val = 99.0
                 grade = calculate_grade(score_val)
 
-                # --- 5. CS / SUPPORT KONTROLÜ (GÖRÜŞ SKORU) ---
+                # --- 5. CS / SUPPORT ---
                 cs_val = 0
                 cs_div = row.find("div", class_="minions")
                 if cs_div:
@@ -220,20 +248,14 @@ def scrape_summoner(url):
                     m = re.search(r"(\d+)\s*CS", row.text, re.IGNORECASE)
                     if m: cs_val = int(m.group(1))
                 
-                # Varsayılan: Minyon Skoru
-                cs_stat = f"{cs_val} CS"
-
-                # Eğer 70'ten azsa Support kabul et ve Görüş Skoru (Wards) bul
+                display_stat = f"{cs_val} CS"
                 if cs_val < 70:
                     ward_score = "0"
-                    # "wards" class'ına sahip div'i bul
                     wards_div = row.find("div", class_="wards")
                     if wards_div:
                         wm = re.search(r"(\d+)", wards_div.text)
                         if wm: ward_score = wm.group(1)
-                    
-                    # Ekrana basılacak yazı
-                    cs_stat = f"GÖRÜŞ {ward_score} VS"
+                    display_stat = f"GÖRÜŞ {ward_score} VS"
 
                 # LP
                 lp_text = ""
@@ -247,7 +269,7 @@ def scrape_summoner(url):
                     "img": final_champ_img,
                     "items": clean_items,
                     "grade": grade,
-                    "cs": cs_stat, # "150 CS" veya "GÖRÜŞ 25 VS"
+                    "cs": display_stat,
                     "queue_mode": queue_mode,
                     "lp_change": lp_text,
                     "kda_score": kda_display
@@ -260,31 +282,29 @@ def scrape_summoner(url):
     except Exception as e:
         return {"error": str(e), "summoner": "Hata", "matches": []}
 
-# --- YENİ API: ARAMA ÖZELLİĞİ ---
 @app.route('/api/search', methods=['GET'])
 def search_users():
-    # URL'den 'q' parametresini al (örn: ?q=abt)
     query = request.args.get('q', '').lower().strip()
-    
     target_urls = []
     
-    # Arama boşsa hiçbir şey yapma veya hata dön
-    if not query:
-        return jsonify({"error": "Lütfen bir grup ismi girin."})
+    if not query: query = "abt" # Varsayılan
     
-    # Grup var mı kontrol et
     if query in HESAPLAR:
         target_urls = HESAPLAR[query]
     else:
-        return jsonify({"error": f"'{query}' adında bir grup bulunamadı."})
+        return jsonify({"error": f"'{query}' grubu bulunamadı."})
 
     all_data = []
-    print(f"Aranıyor: {query} ({len(target_urls)} hesap)")
-    
     for url in target_urls:
-        if url: # Boş linkleri atla
-            all_data.append(scrape_summoner(url))
+        if url: all_data.append(scrape_summoner(url))
         
+    return jsonify(all_data)
+
+@app.route('/api/get-ragnar', methods=['GET'])
+def get_all_users():
+    all_data = []
+    for url in URL_LISTESI:
+        all_data.append(scrape_summoner(url))
     return jsonify(all_data)
 
 if __name__ == '__main__':
