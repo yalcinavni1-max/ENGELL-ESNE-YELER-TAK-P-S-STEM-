@@ -100,7 +100,7 @@ def scrape_summoner(url):
                 kda_div = row.find("div", class_="kda")
                 if not kda_div: continue
 
-                # --- 1. OYUN SÜRESİ (Vision Score Kontrolü İçin) ---
+                # --- 1. OYUN SÜRESİ ---
                 game_duration = 0
                 duration_div = row.find("div", class_="gameDuration")
                 if duration_div:
@@ -118,10 +118,8 @@ def scrape_summoner(url):
                     elif "ARAM" in raw_q: queue_mode = "ARAM"
                     else: queue_mode = raw_q.split()[0] if raw_q else "Normal"
 
-                # --- 3. ŞAMPİYON BULMA (Poro ve LeBlanc Düzeltmesi) ---
+                # --- 3. ŞAMPİYON BULMA ---
                 champ_key = "Poro"
-                
-                # A) Linkten Bulma
                 links = row.find_all("a")
                 for link in links:
                     href = link.get("href", "")
@@ -140,7 +138,7 @@ def scrape_summoner(url):
                             champ_key = name_map.get(raw, raw.capitalize())
                             break
                 
-                # B) Resim Alt Etiketinden Bul (Yedek Plan)
+                # Yedek (Alt Tag)
                 if champ_key == "Poro":
                     for img in row.find_all("img"):
                         alt = img.get("alt", "")
@@ -153,28 +151,22 @@ def scrape_summoner(url):
                             elif "VelKoz" in raw_alt: champ_key = "Velkoz"
                             elif "ChoGath" in raw_alt: champ_key = "Chogath"
                             elif "KhaZix" in raw_alt: champ_key = "Khazix"
-                            elif "Wukong" in raw_alt: champ_key = "MonkeyKing"
                             else: champ_key = raw_alt
                             break
                 final_champ_img = f"{RIOT_CDN}/champion/{champ_key}.png"
 
-                # --- 4. İTEMLER (SENİN ÇALIŞAN ESKİ MANTIĞIN) ---
+                # --- 4. İTEMLER (Regex ile ID Arama - En Sağlam Yöntem) ---
                 items = []
                 img_tags = row.find_all("img")
                 for img in img_tags:
                     img_str = str(img)
-                    # Sadece belirli kelimeleri içerenleri ele, geri kalan img'lerde sayı ara
-                    if "champion" in img_str or "spell" in img_str or "tier" in img_str or "perk" in img_str: continue
-                    
+                    if any(x in img_str for x in ["champion", "spell", "tier", "perk"]): continue
                     candidates = re.findall(r"(\d{4})", img_str)
                     for num in candidates:
                         val = int(num)
-                        if 1000 <= val <= 8000:
-                            if 5000 <= val < 6000: continue
-                            if 2020 <= val <= 2030: continue
+                        if 1000 <= val <= 8000 and not (5000 <= val < 6000) and not (2020 <= val <= 2030):
                             items.append(f"{RIOT_CDN}/item/{val}.png")
-                
-                clean_items = list(dict.fromkeys(items))[:7] # Max 7 item
+                clean_items = list(dict.fromkeys(items))[:7]
 
                 # --- 5. VERİLER ---
                 kda_text = kda_div.text.strip()
@@ -184,16 +176,15 @@ def scrape_summoner(url):
                 score_val = 0.0
                 if len(nums) >= 3:
                     k, d, a = int(nums[0]), int(nums[1]), int(nums[2])
-                    if d > 0:
-                        score_val = (k + a) / d
-                        kda_display = "{:.2f}".format(score_val)
-                    else: 
-                        score_val = 99.0
-                        kda_display = "Perfect"
-                else: kda_display = "-"
+                    score_val = (k + a) / d if d > 0 else 99.0
+                    kda_display = "{:.2f}".format(score_val)
+                else: 
+                    score_val = 99.0
+                    kda_display = "Perfect"
+                
                 grade = calculate_grade(score_val)
 
-                # --- 6. CS / VISION SCORE (SENİN İSTEDİĞİN MANTIK) ---
+                # --- 6. CS / VISION SCORE ---
                 raw_val = 0
                 cs_div = row.find("div", class_="minions")
                 if cs_div:
@@ -204,7 +195,6 @@ def scrape_summoner(url):
                     if m: raw_val = int(m.group(1))
 
                 display_stat = f"{raw_val} CS"
-                # Oyun 10 dk'dan uzun ve 70'ten az sayı varsa Vision Score kabul et
                 if game_duration > 10 and raw_val < 70:
                     display_stat = f"GÖRÜŞ {raw_val} VS"
                 
@@ -227,12 +217,8 @@ def scrape_summoner(url):
         win_rate = (wins / total_games * 100) if total_games > 0 else 0
 
         return {
-            "summoner": summoner_name, 
-            "rank": rank_text, 
-            "icon": profile_icon, 
-            "matches": matches_info,
-            "win_rate": int(win_rate),
-            "win_count": wins
+            "summoner": summoner_name, "rank": rank_text, "icon": profile_icon, 
+            "matches": matches_info, "win_rate": int(win_rate), "win_count": wins
         }
 
     except Exception as e:
