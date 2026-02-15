@@ -284,6 +284,15 @@ def scrape_summoner(url):
 
     except Exception as e:
         return {"error": str(e), "summoner": "Hata", "matches": []}
+# --- WIN RATE HESAPLAMA ---
+        wins = sum(1 for m in matches_info if m['result'] == 'win')
+        total_games = len(matches_info)
+        win_rate = (wins / total_games * 100) if total_games > 0 else 0
+
+        return {
+            "summoner": summoner_name, "rank": rank_text, "icon": profile_icon, 
+            "matches": matches_info, "win_rate": int(win_rate), "win_count": wins
+        }
 
 @app.route('/api/search', methods=['GET'])
 def search_users():
@@ -302,16 +311,6 @@ def search_users():
         if url: all_data.append(scrape_summoner(url))
         
     return jsonify(all_data)
- # --- WIN RATE HESAPLAMA ---
-        wins = sum(1 for m in matches_info if m['result'] == 'win')
-        total_games = len(matches_info)
-        win_rate = (wins / total_games * 100) if total_games > 0 else 0
-
-        return {
-            "summoner": summoner_name, "rank": rank_text, "icon": profile_icon, 
-            "matches": matches_info, "win_rate": int(win_rate), "win_count": wins
-        }
-
 
 @app.route('/api/get-ragnar', methods=['GET'])
 def get_all_users():
