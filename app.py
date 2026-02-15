@@ -227,7 +227,7 @@ def scrape_summoner(url):
                     "cs": display_stat, "queue_mode": queue_mode,
                     "lp_change": lp_text, "kda_score": kda_display
                 })
-                if len(matches_info) >= 5: break
+                if len(matches_info) >= 8: break
             except: continue
         
         # --- WIN RATE HESAPLAMA ---
