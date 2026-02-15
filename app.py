@@ -59,6 +59,9 @@ HESAPLAR = {
     "kaan": [
         "https://www.leagueofgraphs.com/summoner/tr/Eloha-111"
     ],
+    "murat": [
+        "https://www.leagueofgraphs.com/summoner/tr/call%20me%20sch-911"
+    ],
     # "hepsi" grubu otomatik oluşacak, dokunma
     "hepsi": []
 }
