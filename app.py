@@ -33,6 +33,7 @@ HESAPLAR = {
     "musto": ["https://www.leagueofgraphs.com/summoner/tr/QUZEY+TEK%C4%B0NO%C4%9ELU-CAZ"],
     "kaan": ["https://www.leagueofgraphs.com/summoner/tr/Eloha-111"],
     "murat": ["https://www.leagueofgraphs.com/summoner/tr/call%20me%20sch-911"],
+    "taha": ["https://www.leagueofgraphs.com/summoner/tr/Killdozer-3807"],
     "hepsi": []
 }
 
