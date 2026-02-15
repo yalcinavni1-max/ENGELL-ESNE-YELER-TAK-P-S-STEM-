@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ABT Squad Tracker</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        /* Arama Alanı Stilleri */
+        .search-area {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .search-box {
+            padding: 12px 20px;
+            width: 60%;
+            max-width: 400px;
+            border-radius: 25px;
+            border: 2px solid #444;
+            background: #2a2a2a;
+            color: white;
+            font-size: 1rem;
+            outline: none;
+            transition: 0.3s;
+        }
+        .search-box:focus {
+            border-color: #e84118;
+            box-shadow: 0 0 10px rgba(232, 65, 24, 0.3);
+        }
+        .search-btn {
+            padding: 12px 25px;
+            margin-left: 10px;
+            border-radius: 25px;
+            border: none;
+            background: #e84118;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .search-btn:hover { background: #c23616; }
+        .hint { color: #666; font-size: 0.8rem; margin-top: 8px; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1 class="main-title">ABT SQUAD TRACKER</h1>
+        
+        <div class="search-area">
+            <input type="text" id="searchInput" class="search-box" placeholder="Grup adı girin (abt, yiğit, hepsi)...">
+            <button onclick="performSearch()" class="search-btn">ARA</button>
+            <div class="hint">Örnek: 'abt' yazıp Enter'a basın.</div>
+        </div>
+        
+        <div id="profiles-area">
+            <div style="text-align:center; color:#555; margin-top:50px;">
+                Oyuncuları görmek için bir grup adı aratın.
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
