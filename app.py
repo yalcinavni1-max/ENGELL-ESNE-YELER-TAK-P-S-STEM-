@@ -61,13 +61,9 @@ HESAPLAR = {
     "murat": [
         "https://www.leagueofgraphs.com/summoner/tr/call%20me%20sch-911"
     ],
-    "taha": [
-        "https://www.leagueofgraphs.com/summoner/tr/Killdozer-3807"
-    ],
-    "hepsi": [] # Otomatik dolacak
+    "hepsi": []
 }
 
-# "hepsi" grubunu doldur
 all_links = []
 for k, v in HESAPLAR.items():
     if k != "hepsi": all_links.extend(v)
@@ -136,7 +132,17 @@ def scrape_summoner(url):
                 kda_div = row.find("div", class_="kda")
                 if not kda_div: continue
 
-                # --- 1. OYUN TÜRÜ ---
+                # --- 1. OYUN SÜRESİ (DAKİKA) ---
+                game_duration = 0 # Varsayılan 0
+                duration_div = row.find("div", class_="gameDuration")
+                if duration_div:
+                    # "25:30" formatını dakikaya çevir
+                    dur_text = duration_div.text.strip() # "25 min" veya "25:30"
+                    min_match = re.search(r"(\d+)", dur_text)
+                    if min_match:
+                        game_duration = int(min_match.group(1))
+
+                # --- 2. OYUN TÜRÜ ---
                 queue_mode = "Normal"
                 q_div = row.find("div", class_="queueType")
                 if q_div:
@@ -159,7 +165,7 @@ def scrape_summoner(url):
                         elif "Ranked Flex" in row_text: queue_mode = "Flex"
                         elif "ARAM" in row_text: queue_mode = "ARAM"
 
-                # --- 2. ŞAMPİYON BULMA (ÖZEL KARAKTER DÜZELTMESİ) ---
+                # --- 3. ŞAMPİYON BULMA (ÖZEL KARAKTER DÜZELTMESİ) ---
                 champ_key = "Poro"
                 links = row.find_all("a")
                 for link in links:
@@ -168,39 +174,21 @@ def scrape_summoner(url):
                         parts = href.split("/")
                         if len(parts) > 3:
                             raw = parts[3].replace("-", "").replace(" ", "").lower()
-                            
-                            # İSİM HARİTASI (KOD İLE DATA DRAGON EŞLEŞTİRMESİ)
                             name_map = {
-                                "wukong": "MonkeyKing",
-                                "renata": "Renata",
-                                "missfortune": "MissFortune",
-                                "masteryi": "MasterYi",
-                                "drmundo": "DrMundo",
-                                "jarvaniv": "JarvanIV",
-                                "tahmkench": "TahmKench",
-                                "xinzhao": "XinZhao",
-                                "kogmaw": "KogMaw",
-                                "reksai": "RekSai",       # Rek'Sai Eklendi
-                                "kaisa": "Kaisa",         # Kai'Sa Eklendi
-                                "velkoz": "Velkoz",       # Vel'Koz Eklendi
-                                "chogath": "Chogath",     # Cho'Gath Eklendi
-                                "khazix": "Khazix",       # Kha'Zix Eklendi
-                                "belveth": "Belveth",
-                                "aurelionsol": "AurelionSol",
-                                "twistedfate": "TwistedFate",
-                                "leesin": "LeeSin",
-                                "leblanc": "Leblanc"
+                                "wukong": "MonkeyKing", "renata": "Renata", "missfortune": "MissFortune",
+                                "masteryi": "MasterYi", "drmundo": "DrMundo", "jarvaniv": "JarvanIV",
+                                "tahmkench": "TahmKench", "xinzhao": "XinZhao", "kogmaw": "KogMaw",
+                                "reksai": "RekSai", "kaisa": "Kaisa", "velkoz": "Velkoz",
+                                "chogath": "Chogath", "khazix": "Khazix", "belveth": "Belveth"
                             }
                             champ_key = name_map.get(raw, raw.capitalize())
                             break
                 
-                # Yedek (Resim Alt Etiketinden Bulma)
                 if champ_key == "Poro":
                     for img in row.find_all("img"):
                         alt = img.get("alt", "")
                         if alt and len(alt) > 2 and alt not in ["Victory", "Defeat", "Role", "Item", "Gold"]:
                             raw_alt = alt.replace(" ", "").replace("'", "").replace(".", "")
-                            # Buradaki isimleri de kontrol et
                             if raw_alt == "RekSai": champ_key = "RekSai"
                             elif raw_alt == "KaiSa": champ_key = "Kaisa"
                             elif raw_alt == "VelKoz": champ_key = "Velkoz"
@@ -208,10 +196,9 @@ def scrape_summoner(url):
                             elif raw_alt == "KhaZix": champ_key = "Khazix"
                             else: champ_key = raw_alt
                             break
-                
                 final_champ_img = f"{RIOT_CDN}/champion/{champ_key}.png"
 
-                # --- 3. İTEMLER ---
+                # --- 4. İTEMLER ---
                 items = []
                 img_tags = row.find_all("img")
                 for img in img_tags:
@@ -226,7 +213,7 @@ def scrape_summoner(url):
                             items.append(f"{RIOT_CDN}/item/{val}.png")
                 clean_items = list(dict.fromkeys(items))[:9]
 
-                # --- 4. VERİLER ---
+                # --- 5. TEMEL VERİLER ---
                 kda_text = kda_div.text.strip()
                 result = "win" if "Victory" in row.text or "Zafer" in row.text else "lose"
 
@@ -241,7 +228,7 @@ def scrape_summoner(url):
                     else: score_val = 99.0
                 grade = calculate_grade(score_val)
 
-                # --- 5. CS / SUPPORT ---
+                # --- 6. CS / SUPPORT KONTROLÜ (DAKİKA AYARLI) ---
                 cs_val = 0
                 cs_div = row.find("div", class_="minions")
                 if cs_div:
@@ -251,14 +238,30 @@ def scrape_summoner(url):
                     m = re.search(r"(\d+)\s*CS", row.text, re.IGNORECASE)
                     if m: cs_val = int(m.group(1))
                 
+                # Varsayılan
                 display_stat = f"{cs_val} CS"
-                if cs_val < 70:
-                    ward_score = "0"
+                
+                # KURAL: Oyun 10 dakikadan uzunsa VE 70 CS'den azsa -> Support (Görüş Skoru)
+                if game_duration > 10 and cs_val < 70:
+                    vs_score = "0"
+                    
+                    # Yöntem 1: 'wards' class
                     wards_div = row.find("div", class_="wards")
                     if wards_div:
                         wm = re.search(r"(\d+)", wards_div.text)
-                        if wm: ward_score = wm.group(1)
-                    display_stat = f"GÖRÜŞ {ward_score} VS"
+                        if wm: vs_score = wm.group(1)
+                    
+                    # Yöntem 2: Tooltip Taraması (Eğer 'wards' bulamadıysa)
+                    if vs_score == "0":
+                         all_elements = row.find_all(True, {"title": True})
+                         for el in all_elements:
+                             if "Vision Score" in el['title']:
+                                 vs_match = re.search(r"(\d+)", el['title'])
+                                 if vs_match: 
+                                     vs_score = vs_match.group(1)
+                                     break
+
+                    display_stat = f"GÖRÜŞ {vs_score} VS"
 
                 # LP
                 lp_text = ""
@@ -280,7 +283,19 @@ def scrape_summoner(url):
                 if len(matches_info) >= 5: break
             except: continue
         
-        return {"summoner": summoner_name, "rank": rank_text, "icon": profile_icon, "matches": matches_info}
+        # Win Rate Hesaplama
+        wins = sum(1 for m in matches_info if m['result'] == 'win')
+        total_games = len(matches_info)
+        win_rate = (wins / total_games * 100) if total_games > 0 else 0
+
+        return {
+            "summoner": summoner_name, 
+            "rank": rank_text, 
+            "icon": profile_icon, 
+            "matches": matches_info,
+            "win_rate": int(win_rate),
+            "win_count": wins
+        }
 
     except Exception as e:
         return {"error": str(e), "summoner": "Hata", "matches": []}
