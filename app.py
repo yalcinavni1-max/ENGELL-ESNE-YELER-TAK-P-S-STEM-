@@ -100,7 +100,7 @@ def scrape_summoner(url):
                 kda_div = row.find("div", class_="kda")
                 if not kda_div: continue
 
-                # --- 1. OYUN SÜRESİ ---
+                # --- 1. OYUN SÜRESİ (Vision Score Kontrolü İçin) ---
                 game_duration = 0
                 duration_div = row.find("div", class_="gameDuration")
                 if duration_div:
@@ -118,8 +118,10 @@ def scrape_summoner(url):
                     elif "ARAM" in raw_q: queue_mode = "ARAM"
                     else: queue_mode = raw_q.split()[0] if raw_q else "Normal"
 
-                # --- 3. ŞAMPİYON BULMA ---
+                # --- 3. ŞAMPİYON BULMA (Poro ve LeBlanc Düzeltmesi) ---
                 champ_key = "Poro"
+                
+                # A) Linkten Bulma
                 links = row.find_all("a")
                 for link in links:
                     href = link.get("href", "")
@@ -138,47 +140,60 @@ def scrape_summoner(url):
                             champ_key = name_map.get(raw, raw.capitalize())
                             break
                 
-                # Yedek (Alt Tag)
+                # B) Resim Alt Etiketinden Bul (Yedek Plan)
                 if champ_key == "Poro":
                     for img in row.find_all("img"):
                         alt = img.get("alt", "")
                         if alt and len(alt) > 2 and alt not in ["Victory", "Defeat", "Role", "Item", "Gold"]:
                             raw_alt = alt.replace(" ", "").replace("'", "").replace(".", "")
-                            if raw_alt == "Wukong": champ_key = "MonkeyKing"
-                            elif raw_alt == "LeBlanc": champ_key = "Leblanc"
-                            elif raw_alt == "KaiSa": champ_key = "Kaisa"
-                            elif raw_alt == "RekSai": champ_key = "RekSai"
-                            elif raw_alt == "VelKoz": champ_key = "Velkoz"
-                            elif raw_alt == "ChoGath": champ_key = "Chogath"
-                            elif raw_alt == "KhaZix": champ_key = "Khazix"
+                            if "LeBlanc" in raw_alt: champ_key = "Leblanc"
+                            elif "Nunu" in raw_alt: champ_key = "Nunu"
+                            elif "KaiSa" in raw_alt: champ_key = "Kaisa"
+                            elif "RekSai" in raw_alt: champ_key = "RekSai"
+                            elif "VelKoz" in raw_alt: champ_key = "Velkoz"
+                            elif "ChoGath" in raw_alt: champ_key = "Chogath"
+                            elif "KhaZix" in raw_alt: champ_key = "Khazix"
+                            elif "Wukong" in raw_alt: champ_key = "MonkeyKing"
                             else: champ_key = raw_alt
                             break
                 final_champ_img = f"{RIOT_CDN}/champion/{champ_key}.png"
 
-                # --- 4. İTEMLER ---
+                # --- 4. İTEMLER (SENİN ÇALIŞAN ESKİ MANTIĞIN) ---
                 items = []
                 img_tags = row.find_all("img")
                 for img in img_tags:
                     img_str = str(img)
-                    if any(x in img_str for x in ["champion", "spell", "tier", "perk"]): continue
-                    m = re.findall(r"(\d{4})", img_str)
-                    for num in m:
+                    # Sadece belirli kelimeleri içerenleri ele, geri kalan img'lerde sayı ara
+                    if "champion" in img_str or "spell" in img_str or "tier" in img_str or "perk" in img_str: continue
+                    
+                    candidates = re.findall(r"(\d{4})", img_str)
+                    for num in candidates:
                         val = int(num)
-                        if 1000 <= val <= 8000 and not (5000 <= val < 6000):
+                        if 1000 <= val <= 8000:
+                            if 5000 <= val < 6000: continue
+                            if 2020 <= val <= 2030: continue
                             items.append(f"{RIOT_CDN}/item/{val}.png")
-                clean_items = list(dict.fromkeys(items))[:7]
+                
+                clean_items = list(dict.fromkeys(items))[:7] # Max 7 item
 
                 # --- 5. VERİLER ---
                 kda_text = kda_div.text.strip()
                 result = "win" if "Victory" in row.text or "Zafer" in row.text else "lose"
+
                 nums = re.findall(r"(\d+)", kda_text)
                 score_val = 0.0
                 if len(nums) >= 3:
                     k, d, a = int(nums[0]), int(nums[1]), int(nums[2])
-                    score_val = (k + a) / d if d > 0 else 99.0
+                    if d > 0:
+                        score_val = (k + a) / d
+                        kda_display = "{:.2f}".format(score_val)
+                    else: 
+                        score_val = 99.0
+                        kda_display = "Perfect"
+                else: kda_display = "-"
                 grade = calculate_grade(score_val)
 
-                # --- 6. CS / VISION SCORE ---
+                # --- 6. CS / VISION SCORE (SENİN İSTEDİĞİN MANTIK) ---
                 raw_val = 0
                 cs_div = row.find("div", class_="minions")
                 if cs_div:
@@ -189,10 +204,10 @@ def scrape_summoner(url):
                     if m: raw_val = int(m.group(1))
 
                 display_stat = f"{raw_val} CS"
+                # Oyun 10 dk'dan uzun ve 70'ten az sayı varsa Vision Score kabul et
                 if game_duration > 10 and raw_val < 70:
                     display_stat = f"GÖRÜŞ {raw_val} VS"
                 
-                # --- 7. LP ---
                 lp_text = ""
                 lp_match = re.search(r"([+-]\d+)\s*LP", row.text)
                 if lp_match: lp_text = f"{lp_match.group(1)} LP"
@@ -201,14 +216,14 @@ def scrape_summoner(url):
                     "champion": champ_key, "result": result, "kda": kda_text,
                     "img": final_champ_img, "items": clean_items, "grade": grade,
                     "cs": display_stat, "queue_mode": queue_mode,
-                    "lp_change": lp_text, "kda_score": "{:.2f}".format(score_val) if score_val != 99.0 else "Perfect"
+                    "lp_change": lp_text, "kda_score": kda_display
                 })
                 if len(matches_info) >= 5: break
             except: continue
         
         # --- WIN RATE HESAPLAMA ---
-        total_games = len(matches_info)
         wins = sum(1 for m in matches_info if m['result'] == 'win')
+        total_games = len(matches_info)
         win_rate = (wins / total_games * 100) if total_games > 0 else 0
 
         return {
@@ -216,8 +231,8 @@ def scrape_summoner(url):
             "rank": rank_text, 
             "icon": profile_icon, 
             "matches": matches_info,
-            "win_rate": int(win_rate), # Örn: 60
-            "win_count": wins          # Örn: 3
+            "win_rate": int(win_rate),
+            "win_count": wins
         }
 
     except Exception as e:
