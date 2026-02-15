@@ -19,9 +19,9 @@ async function performSearch() {
             const section = document.createElement('div');
             section.className = 'user-section';
             
+            // Win Rate Renkleri
             const wr = user.win_rate;
-            // Renk Ayarı: %50 ve üstü yeşil, altı kırmızı/turuncu
-            const wrColor = wr >= 50 ? '#2ecc71' : (wr <= 20 ? '#e74c3c' : '#f39c12');
+            const wrCol = wr >= 50 ? '#2ecc71' : (wr <= 25 ? '#e74c3c' : '#f39c12');
 
             section.innerHTML = `
                 <div class="profile-header">
@@ -29,7 +29,7 @@ async function performSearch() {
                     <div class="profile-text">
                         <div class="name-row">
                             <span class="summoner-name-style">${user.summoner}</span>
-                            <div class="wr-pie" style="background: conic-gradient(${wrColor} 0% ${wr}%, #444 ${wr}% 100%);">
+                            <div class="wr-pie" style="background: conic-gradient(${wrCol} 0% ${wr}%, #444 ${wr}% 100%);">
                                 <span class="wr-text">%${wr}</span>
                             </div>
                         </div>
@@ -44,13 +44,21 @@ async function performSearch() {
                 card.className = `match-card ${match.result}`;
                 card.onclick = () => card.classList.toggle('active');
                 
+                // İtemler (Boşluksuz)
                 let itemsHtml = match.items.map(url => `<div class="item-slot"><img src="${url}" class="item-img"></div>`).join('');
                 const csColor = match.cs.includes("VS") ? "#3498db" : "#aaa";
+
+                // Puan Rengi (Grade Class) Kontrolü
+                // Grade bazen S, A, B+ gelebilir. Sadece ilk harfi alıp class yapıyoruz (grade-S, grade-A)
+                const gradeClass = `grade-${match.grade.charAt(0)}`; 
 
                 card.innerHTML = `
                     <div class="card-content">
                         <div class="champ-info"><img src="${match.img}" class="champ-img">
-                            <div><span class="champ-name">${match.champion}</span><div class="grade-badge grade-${match.grade}">${match.grade}</div></div>
+                            <div>
+                                <span class="champ-name">${match.champion}</span>
+                                <div class="grade-badge ${gradeClass}">${match.grade}</div>
+                            </div>
                         </div>
                         <div class="items-grid">${itemsHtml}</div>
                         <div class="stats"><div class="result-text">${match.result.toUpperCase()}</div><div class="kda-text">${match.kda}</div></div>
